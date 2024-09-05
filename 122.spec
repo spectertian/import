@@ -4,8 +4,7 @@
 a = Analysis(
     ['700.py'],
     pathex=[],
-    binaries=[('msvcp140.dll', 'C:\\Windows\\System32\\msvcp140.dll', 'BINARY'),
-        ('vcruntime140.dll', 'C:\\Windows\\System32\\vcruntime140.dll', 'BINARY')],
+    binaries=[('C:\\Windows\\System32\\msvcp140.dll', '.'),('C:\\Windows\\System32\\vcruntime140.dll', '.'),],
     datas=[],
     hiddenimports=['paddle', 'paddle.fluid', 'paddle.fluid.core', 'paddle.fluid.framework'],
     hookspath=[],
