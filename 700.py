@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, QLabel, QTextEdit
 from PySide6.QtCore import Qt
 from pathlib import Path
-import PDFProcessor  # 假设我们把之前的PDFProcessor类放在一个单独的文件中
+from PDFProcessor import PDFProcessor  # 假设我们把之前的PDFProcessor类放在一个单独的文件中
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
             self.excel_path.setText(file_path)
 
     def select_output(self):
-        file_path, _ = QFileDialog.getSaveFileName(self, "选择输出文件", "", "Excel Files (*.xlsx)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择输出文件", "", "Excel Files (*.xlsx)")
         if file_path:
             self.output_path.setText(file_path)
 
