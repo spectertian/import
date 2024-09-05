@@ -12,3 +12,4 @@
 
 # pip install pyinstaller
 # python setup.py build_ext --inplace
+# pyinstaller 122.spec
