@@ -39,7 +39,7 @@ def process_pdf(pdf_path):
     temp_image_path = "temp_image.png"
     cv2.imwrite(temp_image_path, processed_img)
 
-    result = table_engine(temp_image_path)
+    # result = table_engine(temp_image_path)
     data = {'date': '', 'list': []}
     re_ss = []
 
