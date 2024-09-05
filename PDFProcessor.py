@@ -28,7 +28,7 @@ class PDFProcessor:
 
     @staticmethod
     def is_valid_name(text):
-        pattern = r'^[a-zA-Z,\s\-\.\']+$'
+        pattern = r'^[a-zA-Z,\s\-\.\!\']+$'
         return bool(re.match(pattern, text))
 
     @staticmethod
@@ -36,10 +36,26 @@ class PDFProcessor:
         return re.sub(r'^\.|\.+$', '', text)
 
     @staticmethod
+    def remove_exclamations(s):
+        return s.strip('!')
+
+    @staticmethod
     def format_time(time_str):
         if ":" in time_str:
             parts = time_str.split(':')
             return f"{parts[0].zfill(2)}:{parts[1].zfill(2)}"
+        if time_str.isdigit():
+            # 如果长度小于4，在前面补0
+            s = time_str.zfill(4)
+
+            # 只取前四位
+            s = s[:4]
+
+            # 用冒号分割
+            return f"{s[:2]}:{s[2:]}"
+            # 在中间插入冒号
+            # return f"{time_str[:2]}:{time_str[2:]}"
+
         return time_str
 
     def process_pdf(self):
@@ -53,15 +69,22 @@ class PDFProcessor:
         temp_image_path = "temp_image.png"
         cv2.imwrite(temp_image_path, processed_img)
 
-        result = self.table_engine(temp_image_path)
+        # result = self.table_engine(temp_image_path)
         data = {'date': '', 'list': []}
         re_ss = []
-
+        kai_start = False
         ocr_result = self.ocr.ocr(temp_image_path, cls=True)
         for line in ocr_result:
             for i, word_info in enumerate(line, start=1):
                 text = word_info[1][0]
                 text = self.remove_dots(text)
+                text = self.remove_exclamations(text)
+                text = text.replace(",", ",").strip()
+                text = text.replace(" i", "").strip()
+
+                if "," in text:
+                    kai_start = True
+
                 print(text)
                 if "REMARK" in text:
                     break
@@ -69,16 +92,21 @@ class PDFProcessor:
                     continue
                 if i == 7:
                     data['date'] = text
-                elif i >= 17:
+                elif i > 17 or kai_start is True:
                     if self.is_valid_name(text):
-                        new_title = text.replace(",", ",").strip()
-                        if i > 17 and ',' in new_title:
+                        if ',' in text:
                             if len(re_ss) > 0:
                                 data['list'].append(re_ss)
                             re_ss = []
-                        re_ss.append(new_title)
+                        re_ss.append(text)
                     else:
-                        re_ss.append(self.format_time(text.strip()))
+                        if '|' in text:
+                            new_li = text.split('|')
+                            for word in new_li:
+                                re_ss.append(self.format_time(word.strip()))
+
+                        else:
+                            re_ss.append(self.format_time(text.strip()))
 
         if re_ss:
             data['list'].append(re_ss)
