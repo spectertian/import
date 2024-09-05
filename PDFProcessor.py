@@ -28,8 +28,12 @@ class PDFProcessor:
 
     @staticmethod
     def is_valid_name(text):
-        pattern = r'^[a-zA-Z,\s\-\']+$'
+        pattern = r'^[a-zA-Z,\s\-\.\']+$'
         return bool(re.match(pattern, text))
+
+    @staticmethod
+    def remove_dots(text):
+        return re.sub(r'^\.|\.+$', '', text)
 
     @staticmethod
     def format_time(time_str):
@@ -41,7 +45,7 @@ class PDFProcessor:
     def process_pdf(self):
         with fitz.open(self.pdf_path) as pdf_document:
             page = pdf_document[0]
-            pix = page.get_pixmap(matrix=fitz.Matrix(4, 3))
+            pix = page.get_pixmap(matrix=fitz.Matrix(3, 3))
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             img_np = np.array(img)
 
@@ -57,15 +61,20 @@ class PDFProcessor:
         for line in ocr_result:
             for i, word_info in enumerate(line, start=1):
                 text = word_info[1][0]
-                if "1REMARK" in text:
+                text = self.remove_dots(text)
+                print(text)
+                if "REMARK" in text:
                     break
+                if text == "OFF" or text == "OFE" or text == "ON":
+                    continue
                 if i == 7:
                     data['date'] = text
                 elif i >= 17:
                     if self.is_valid_name(text):
                         new_title = text.replace(",", ",").strip()
                         if i > 17 and ',' in new_title:
-                            data['list'].append(re_ss)
+                            if len(re_ss) > 0:
+                                data['list'].append(re_ss)
                             re_ss = []
                         re_ss.append(new_title)
                     else:
@@ -79,16 +88,23 @@ class PDFProcessor:
 
     def add_row_and_insert_data(self, new_data):
         try:
-            with openpyxl.load_workbook(self.output_file_path) as wb:
-                ws = wb.active
-                last_row = max((c.row for c in ws['B'] if c.value is not None), default=0)
-                new_row = last_row + 1
-                for i, value in enumerate(new_data, start=2):
-                    ws[f"{get_column_letter(i)}{new_row}"] = value
-                wb.save(self.output_file_path)
+            wb = openpyxl.load_workbook(self.output_file_path)
+            ws = wb.active
+
+            last_row = max((c.row for c in ws['B'] if c.value is not None), default=0)
+            new_row = last_row + 1
+
+            for i, value in enumerate(new_data, start=2):
+                ws[f"{get_column_letter(i)}{new_row}"] = value
+
+            wb.save(self.output_file_path)
             print(f"数据已添加到第 {new_row} 行，从B列开始")
+
         except Exception as e:
             print(f"添加数据时发生错误: {e}")
+        finally:
+            if 'wb' in locals():
+                wb.close()
 
     def search_excel_file(self, search_strings):
         try:
@@ -114,24 +130,30 @@ class PDFProcessor:
         print(result)
 
         for info in result['list']:
-            if info[0]:
+            if len(info) > 0 and len(info[0]) > 0:
                 name_parts = [part.strip() for part in info[0].split(',')]
                 full_name = ' '.join(name_parts)
                 search_strings = full_name.split()
                 print(search_strings)
 
-                search_result = self.search_excel_file(search_strings)
-                if search_result.empty:
-                    print("没有找到匹配的行")
-                else:
-                    print("找到以下匹配的行：")
-                    print(search_result)
-                    new_data = info[:]
-                    del new_data[1]
-                    self.add_row_and_insert_data(new_data)
+                # search_result = self.search_excel_file(search_strings)
+                new_data = info
+                del new_data[1]
+                print(new_data)
+                self.add_row_and_insert_data(new_data)
+                # if search_result.empty:
+                #     print("没有找到匹配的行")
+                # else:
+                #     print("找到以下匹配的行：")
+                #     print(search_result)
+                #     new_data = info[:]
+                #     del new_data[1]
+                #     self.add_row_and_insert_data(new_data)
 
 
 def main():
+    # pdf_path = "./doc/20240820200058571.pdf"
+    # pdf_path = "./doc/20240820200116072.pdf"
     pdf_path = "./doc/20240820200038923.pdf"
     excel_file_path = './doc/Change Out Report 2024.xlsx'
     output_file_path = './doc/8-19-2024 Burchett C-10003 Moss Mountain.xlsx'
