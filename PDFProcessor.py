@@ -164,25 +164,25 @@ class PDFProcessor:
                 search_strings = full_name.split()
                 print(search_strings)
 
-                # search_result = self.search_excel_file(search_strings)
-                new_data = info
-                del new_data[1]
-                print(new_data)
-                self.add_row_and_insert_data(new_data)
-                # if search_result.empty:
-                #     print("没有找到匹配的行")
-                # else:
-                #     print("找到以下匹配的行：")
-                #     print(search_result)
-                #     new_data = info[:]
-                #     del new_data[1]
-                #     self.add_row_and_insert_data(new_data)
+                search_result = self.search_excel_file(search_strings)
+                # new_data = info
+                # del new_data[1]
+                # print(new_data)
+                # self.add_row_and_insert_data(new_data)
+                if search_result.empty:
+                    print("没有找到匹配的行")
+                else:
+                    print("找到以下匹配的行：")
+                    print(search_result)
+                    new_data = info[:]
+                    del new_data[1]
+                    self.add_row_and_insert_data(new_data)
 
 
 def main():
-    # pdf_path = "./doc/20240820200058571.pdf"
+    pdf_path = "./doc/20240820200058571.pdf"
     # pdf_path = "./doc/20240820200116072.pdf"
-    pdf_path = "./doc/20240820200038923.pdf"
+    # pdf_path = "./doc/20240820200038923.pdf"
     excel_file_path = './doc/Change Out Report 2024.xlsx'
     output_file_path = './doc/8-19-2024 Burchett C-10003 Moss Mountain.xlsx'
 
